@@ -46,18 +46,6 @@ public extension KeychainStorage {
     func remove(key: String) throws {
         removeObject(forKey: key)
     }
-    
-    func saveString(_ string: String?, key: String) throws {
-        if let string {
-            try keychain.updateValue(key: key, newValue: string)
-        } else {
-            try keychain.remove(key: key)
-        }
-    }
-    
-    func loadString(key: String) throws -> String? {
-        try keychain.getValue(key: key)
-    }
 }
 
 public extension Storage where Self == KeychainStorage {
