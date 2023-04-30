@@ -5,18 +5,22 @@
 import Foundation
 
 public extension Date {
+    /// The date representing yesterday.
     var yesterday: Date {
         Calendar.current.date(byAdding: .day, value: -1, to: self) ?? self
     }
     
+    /// The date representing tomorrow.
     var tomorrow: Date {
         Calendar.current.date(byAdding: .day, value: 1, to: self) ?? self
     }
     
+    /// The start of the current day.
     var startOfDay: Date {
         Calendar.current.startOfDay(for: self)
     }
 
+    /// The end of the current day.
     var endOfDay: Date? {
         let components = DateComponents(hour: 23, minute: 59, second: 59)
         return Calendar.current.date(byAdding: components, to: startOfDay)
@@ -55,6 +59,11 @@ public extension Date {
         tomorrow.month != month
     }
     
+    /// Sets the time from the specified date and returns a new date with the updated time.
+    ///
+    /// This function extracts the hour and minute components from the provided `timeDate` and sets them for the current date.
+    /// - Parameter timeDate: The date from which the time components (hour and minute) will be extracted.
+    /// - Returns: A new date with the updated time components.
     func setTime(from timeDate: Date) -> Date {
         let timeComponents = Calendar.current.dateComponents([.hour, .minute], from: timeDate)
         var result = Calendar.current.date(bySetting: .hour, value: timeComponents.hour ?? 0, of: self) ?? self
@@ -150,16 +159,20 @@ public extension Date {
 
 public extension Date {
     
+    /// Creates a new date from the given ISO 8601 formatted string.
+    ///
+    /// This function attempts to parse the provided ISO 8601 string using the `Date.ISO8601FormatStyle` format style
+    /// with fractional seconds included. If the string cannot be parsed, a parsing error will be thrown.
+    ///
+    /// - Parameter string: The ISO 8601 formatted string to be parsed.
+    /// - Throws: A parsing error if the provided string cannot be parsed into a date.
+    /// - Returns: A new date object created from the parsed ISO 8601 string.
+    /// - Requires: iOS 15.0 or later.
     @available(iOS 15.0, *)
-    static func iso8601(string: String) -> Date {
+    static func iso8601(string: String) throws -> Date {
         let dateFormatStyle = Date.ISO8601FormatStyle(includingFractionalSeconds: true)
+        let date = try Date(string, strategy: dateFormatStyle)
+        return date
         
-        do {
-            let date = try Date(string, strategy: dateFormatStyle)
-            return date
-        } catch {
-            assertionFailure("Parse date error:" + "\(error)" + "for response \(self)")
-            return .distantFuture
-        }
     }
 }
