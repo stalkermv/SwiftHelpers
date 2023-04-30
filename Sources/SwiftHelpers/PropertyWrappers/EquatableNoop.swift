@@ -4,10 +4,12 @@
 
 import Foundation
 
+/// A property wrapper that makes a value conform to `Equatable` without adding any additional logic.
 @propertyWrapper
 public struct EquatableNoop<Value>: Equatable {
     public var wrappedValue: Value
 
+    /// Initializes a new instance of the property wrapper with the specified wrapped value.
     public init(wrappedValue value: Value) {
         self.wrappedValue = value
     }
