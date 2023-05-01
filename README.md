@@ -1,5 +1,7 @@
 # SwiftHelpers
 
+[![Build and Tests](https://github.com/stalkermv/SwiftHelpers/actions/workflows/swift.yml/badge.svg)](https://github.com/stalkermv/SwiftHelpers/actions/workflows/swift.yml)
+
 SwiftHelpers is a collection of convenient Swift extensions and helper functions designed to simplify common tasks and improve code readability in your Swift projects. These utilities cover a wide range of functionalities, from working with arrays and strings to manipulating dates and handling optional values.
 
 Features
