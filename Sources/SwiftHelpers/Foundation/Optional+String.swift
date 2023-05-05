@@ -1,7 +1,4 @@
 //
-//  File.swift
-//  
-//
 //  Created by Valeriy Malishevskyi on 01.05.2023.
 //
 
