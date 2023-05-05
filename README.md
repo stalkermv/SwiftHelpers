@@ -101,4 +101,4 @@ Contributions to SwiftHelpers are welcome! Feel free to submit a pull request wi
 License
 -------
 
-SwiftHelpers is released under the MIT License. See the `LICENSE` file for more information.
+SwiftHelpers is released under the MIT License. See the [LICENSE](License) file for more information.
