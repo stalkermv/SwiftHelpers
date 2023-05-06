@@ -34,14 +34,13 @@ import SwiftUI
 /// and is saved to the storage object when the property is set.
 ///
 /// The `StorableValue` property wrapper is generic over a type `T` that conforms to `Codable`.
-///
-/// - Note: The `StorableValue` property wrapper uses an `EquatableNoop` property wrapper
-/// to make the `Storage` object conform to `Equatable` without adding any additional logic.
 @propertyWrapper
 public struct StorableValue<T: Codable> : DynamicProperty {
+    @Environment(\.isStorageEnabled) private var isStorageEnabled
+    
     public var defaultValue: T
     public var key: String
-    @EquatableNoop public var storage: Storage
+    public var storage: Storage
     private var inMemoryValue: T
 
     public init(wrappedValue: T, key: String, in storage: Storage) {
@@ -59,10 +58,10 @@ public struct StorableValue<T: Codable> : DynamicProperty {
     public var wrappedValue: T  {
         get { inMemoryValue }
         set {
+            guard isStorageEnabled else { return }
+            
             inMemoryValue = newValue
             try? storage.save(newValue, key: key)
         }
     }
 }
-
-extension StorableValue: Equatable where T: Equatable {}
