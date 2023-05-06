@@ -41,13 +41,13 @@ public struct StorableValue<T: Codable> : DynamicProperty {
     public var defaultValue: T
     public var key: String
     public var storage: Storage
-    private var inMemoryValue: T
+    @State private var inMemoryValue: T
 
     public init(wrappedValue: T, key: String, in storage: Storage) {
         self.key = key
         self.defaultValue = wrappedValue
         self.storage = storage
-        self.inMemoryValue = defaultValue
+        self._inMemoryValue = State(initialValue: wrappedValue)
         self.wrappedValue = (try? storage.load(key: key)) ?? defaultValue
     }
 
