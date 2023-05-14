@@ -42,26 +42,33 @@ public struct StorableValue<T: Codable> : DynamicProperty {
     public var key: String
     public var storage: Storage
     @State private var inMemoryValue: T
-
+    
     public init(wrappedValue: T, key: String, in storage: Storage) {
         self.key = key
         self.defaultValue = wrappedValue
         self.storage = storage
-        self._inMemoryValue = State(initialValue: wrappedValue)
-        self.wrappedValue = (try? storage.load(key: key)) ?? defaultValue
+        self._inMemoryValue = State(initialValue: (try? storage.load(key: key)) ?? defaultValue)
     }
-
+    
     public init<K: RawRepresentable>(wrappedValue: T, key: K, in storage: Storage) where K.RawValue == String {
         self.init(wrappedValue: wrappedValue, key: key.rawValue, in: storage)
     }
-
+    
     public var wrappedValue: T  {
         get { inMemoryValue }
-        set {
+        nonmutating set {
             guard isStorageEnabled else { return }
             
             inMemoryValue = newValue
             try? storage.save(newValue, key: key)
         }
     }
+    
+    public var projectedValue: Binding<T> {
+        Binding(
+            get: { self.wrappedValue },
+            set: { self.wrappedValue = $0 }
+        )
+    }
 }
+
