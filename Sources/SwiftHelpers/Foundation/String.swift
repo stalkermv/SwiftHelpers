@@ -57,11 +57,11 @@ extension String: Identifiable {
 // MARK: - Base64
 
 public extension String {
-    func toBase64() -> String {
+    func base64EncodedString() -> String {
         Data(self.utf8).base64EncodedString()
     }
     
-    func fromBase64() -> String? {
+    func decodedFromBase64() -> String? {
         guard let data = Data(base64Encoded: self) else {
             return nil
         }
