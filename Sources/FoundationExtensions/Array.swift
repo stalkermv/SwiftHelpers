@@ -85,6 +85,13 @@ public extension Array {
     }
 }
 
+extension Array {
+    public subscript(index: Int, default defaultValue: @autoclosure () -> Element) -> Element {
+        guard index >= 0, index < count else { return defaultValue() }
+        return self[index]
+    }
+}
+
 public extension Array {
     /// Returns a new array with elements that are mutated using the provided mutation function.
     ///
@@ -115,5 +122,54 @@ public extension Array {
             mutation(&mutableElement)
             return mutableElement
         }
+    }
+}
+
+public extension Array {
+    /// Returns the first index where the specified value appears in the array.
+    ///
+    /// This method searches the array for the first element that matches the specified value at a given key path. 
+    /// It's useful for finding an element in an array of complex objects based on one of the object's properties.
+    ///
+    /// - Parameters:
+    ///   - element: The element to search for in the array.
+    ///   - keyPath: A key path to a specific property of the element to compare.
+    /// - Returns: The first index where the specified value is found, or `nil` if the value is not found.
+    ///
+    /// Usage Example:
+    /// ```
+    /// struct Person {
+    ///     var id: Int
+    ///     var name: String
+    /// }
+    ///
+    /// let people = [Person(id: 1, name: "Alice"), Person(id: 2, name: "Bob")]
+    /// if let index = people.firstIndex(of: Person(id: 2, name: "Bob"), by: \.id) {
+    ///     print("Found at index \(index)")
+    /// }
+    /// ```
+    func firstIndex<Value: Equatable>(of element: Element, by keyPath: KeyPath<Element, Value>) -> Int? {
+        firstIndex(where: { $0[keyPath: keyPath] == element[keyPath: keyPath] })
+    }
+}
+
+public extension Array {
+    /// Appends a new element to the array and returns a new array.
+    ///
+    /// This method creates a new array by appending the given element to the end of the original array.
+    /// It's useful when you need to append an element but also need to retain the original array unchanged.
+    ///
+    /// - Parameter element: The element to append to the array.
+    /// - Returns: A new array that includes the original elements plus the new element.
+    ///
+    /// Usage:
+    /// ```swift
+    /// let numbers = [1, 2, 3]
+    /// let newNumbers = numbers.appending(4)
+    /// // numbers is still [1, 2, 3]
+    /// // newNumbers is [1, 2, 3, 4]
+    /// ```
+    @inlinable func appending(_ element: Element) -> Array {
+        return self + [element]
     }
 }

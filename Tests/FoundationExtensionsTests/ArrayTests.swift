@@ -5,11 +5,10 @@
 //  Created by Valeriy Malishevskyi on 01.05.2023.
 //
 
-import XCTest
-@testable import SwiftHelpers
+import Testing
+@testable import FoundationExtensions
 
-final class ArraySortingTests: XCTestCase {
-    
+struct ArraySortingTests {
     struct Person: Equatable {
         let name: String
         let age: Int?
@@ -22,7 +21,7 @@ final class ArraySortingTests: XCTestCase {
         Person(name: "David", age: nil)
     ]
     
-    func testSortByNameAscending() {
+    @Test func sortByNameAscending() {
         let sortedPeople = people.sorted(keyPath: \.name)
         let expected = [
             Person(name: "Alice", age: 30),
@@ -30,10 +29,10 @@ final class ArraySortingTests: XCTestCase {
             Person(name: "Charles", age: 35),
             Person(name: "David", age: nil)
         ]
-        XCTAssertEqual(sortedPeople, expected)
+        #expect(sortedPeople == expected)
     }
     
-    func testSortByNameDescending() {
+    @Test func sortByNameDescending() {
         let sortedPeople = people.sorted(keyPath: \.name, ascending: false)
         let expected = [
             Person(name: "David", age: nil),
@@ -41,10 +40,10 @@ final class ArraySortingTests: XCTestCase {
             Person(name: "Bob", age: 25),
             Person(name: "Alice", age: 30)
         ]
-        XCTAssertEqual(sortedPeople, expected)
+        #expect(sortedPeople == expected)
     }
     
-    func testSortByAgeAscending() {
+    @Test func sortByAgeAscending() {
         let sortedPeople = people.sorted(keyPath: \.age)
         let expected = [
             Person(name: "Bob", age: 25),
@@ -52,10 +51,10 @@ final class ArraySortingTests: XCTestCase {
             Person(name: "Charles", age: 35),
             Person(name: "David", age: nil)
         ]
-        XCTAssertEqual(sortedPeople, expected)
+        #expect(sortedPeople == expected)
     }
     
-    func testSortByAgeDescending() {
+    @Test func sortByAgeDescending() {
         let sortedPeople = people.sorted(keyPath: \.age, ascending: false)
         let expected = [
             Person(name: "Charles", age: 35),
@@ -63,6 +62,21 @@ final class ArraySortingTests: XCTestCase {
             Person(name: "Bob", age: 25),
             Person(name: "David", age: nil)
         ]
-        XCTAssertEqual(sortedPeople, expected)
+        #expect(sortedPeople == expected)
+    }
+    
+    @Test func firstIndexOf() {
+        let input = [1, 2, 3, 4, 5]
+        let expectedOutput = 2
+        
+        #expect(input.firstIndex(of: 3) == expectedOutput)
+    }
+    
+    @Test func appending() {
+        let input = [1, 2, 3]
+        let elementToAppend = 4
+        let expectedOutput = [1, 2, 3, 4]
+        
+        #expect(input.appending(elementToAppend) == expectedOutput)
     }
 }
