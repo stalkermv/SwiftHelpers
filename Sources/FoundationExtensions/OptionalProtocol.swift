@@ -13,6 +13,10 @@ import Foundation
 /// check whether a value is absent (`isNone`) and requires conformance to
 /// `ExpressibleByNilLiteral` to allow initialization from `nil`.
 public protocol OptionalProtocol: ExpressibleByNilLiteral {
+    
+    /// The type of the value wrapped inside the optional.
+    associatedtype Wrapped
+    
     /// A Boolean value indicating whether the optional is `.none`.
     ///
     /// Use this property to determine if the optional does not contain a value.
@@ -22,6 +26,9 @@ public protocol OptionalProtocol: ExpressibleByNilLiteral {
     /// print(value.isNone) // true
     /// ```
     var isNone: Bool { get }
+    
+    /// The wrapped value, or `nil` if the optional is `none`.
+    var wrappedValue: Wrapped { get throws }
 }
 
 extension Optional: OptionalProtocol {
