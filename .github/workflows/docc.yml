@@ -11,26 +11,27 @@ permissions:
 
 jobs:
   build:
+    name: Build DocC
     runs-on: macos-latest
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Build Static Site
+      - name: Build DocC static site
         uses: kiarashvosough1999/build-docC-static-site@v1.0.3
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v3
         with:
-          name: docC-generated-static-site-zipped-upload-name
-          path: ./path-to-generated-site.zip
+          docC-generated-static-site-zipped-upload-name: docC_generated_site_zipped
 
   deploy:
-    needs: build
+    name: Deploy to GitHub Pages
     runs-on: ubuntu-latest
+    needs: build
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deploy.outputs.docC-page_url }}
     steps:
-      - name: Deploy to GitHub Pages
+      - name: Deploy DocC site
+        id: deploy
         uses: kiarashvosough1999/docC-github-pages-deploy@v1.0.0
+        with:
+          docC-generated-static-site-uploaded-name: docC_generated_site_zipped
