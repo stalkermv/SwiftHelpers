@@ -1,0 +1,36 @@
+name: Build and Deploy DocC
+
+on:
+  push:
+    branches: [ '*' ]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: macos-12
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Build Static Site
+        uses: kiarashvosough1999/build-docC-static-site@v1.0.3
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: docC-generated-static-site-zipped-upload-name
+          path: ./path-to-generated-site.zip
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        uses: kiarashvosough1999/docC-github-pages-deploy@v1.0.0
