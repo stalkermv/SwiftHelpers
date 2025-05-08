@@ -6,16 +6,60 @@ name: Tests
 on:
   push:
     branches: [ "main" ]
+  pull_request:
 
 jobs:
-  build:
+  test-macos:
+    name: macOS Tests
     runs-on: macos-15
     steps:
-    - name: Select Xcode 16.3
-      run: sudo xcode-select -s /Applications/Xcode_16.3.app
-    - name: Checkout Repository
-      uses: actions/checkout@v4
-    - name: Build
-      run: swift build -v
-    - name: Run tests
-      run: swift test -v
+      - name: Select Xcode 16.3
+        run: sudo xcode-select -s /Applications/Xcode_16.3.app
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run macOS Tests
+        run: swift test --enable-code-coverage
+
+  test-ios:
+    name: iOS Simulator Tests
+    runs-on: macos-15
+    steps:
+      - name: Select Xcode 16.3
+        run: sudo xcode-select -s /Applications/Xcode_16.3.app
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create Temporary Xcode Project for SPM
+        run: |
+          mkdir XcodeSPMProject
+          cd XcodeSPMProject
+          swift package init --type executable
+          echo 'import PackageDescription
+
+          let package = Package(
+              name: "WrapperApp",
+              platforms: [.iOS(.v16)],
+              products: [],
+              dependencies: [
+                  .package(path: "..")
+              ],
+              targets: [
+                  .executableTarget(name: "WrapperApp", dependencies: []),
+                  .testTarget(name: "WrapperAppTests", dependencies: [])
+              ]
+          )' > Package.swift
+
+          swift package generate-xcodeproj
+
+      - name: List Schemes
+        run: xcodebuild -list -project XcodeSPMProject/WrapperApp.xcodeproj
+
+      - name: Run iOS Tests
+        run: |
+          xcodebuild test \
+            -project XcodeSPMProject/WrapperApp.xcodeproj \
+            -scheme WrapperApp \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.3'
