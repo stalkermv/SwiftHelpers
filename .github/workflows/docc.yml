@@ -14,12 +14,10 @@ jobs:
     name: Build DocC
     runs-on: macos-latest
     steps:
+      - name: Set Xcode version
+        run: sudo xcode-select -s /Applications/Xcode_16.2.app
       - name: Checkout repository
         uses: actions/checkout@v4
-        
-      - name: Set Xcode version
-        run: sudo xcode-select -s /Applications/Xcode_16.3.app
-
       - name: Build DocC static site
         uses: kiarashvosough1999/build-docC-static-site@v1.0.3
         with:
