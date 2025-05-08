@@ -42,7 +42,7 @@ extension InMemorySecureStorage: SecureStorageService {
         
         for subscription in subscriptions {
             Task {
-                await subscription.update()
+                subscription.update()
             }
         }
         

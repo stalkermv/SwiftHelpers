@@ -93,7 +93,7 @@ extension Array: Contentless {
         }
 
         let nonNilElements: [Any] = self.compactMap {
-            if let optional = $0 as? OptionalProtocol, optional.isNone {
+            if let optional = $0 as? (any OptionalProtocol), optional.isNone {
                 return nil
             }
             return $0
