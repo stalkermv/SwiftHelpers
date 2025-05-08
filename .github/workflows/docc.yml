@@ -2,26 +2,66 @@ name: Build and Deploy DocC
 
 on:
   push:
-    branches: [ '*' ]
+    branches: ["*"]
+  workflow_dispatch:
 
 permissions:
   contents: read
   pages: write
   id-token: write
 
+concurrency:
+  group: "docc-pages"
+  cancel-in-progress: true
+
 jobs:
   build:
     name: Build DocC
-    runs-on: macos-15
+    runs-on: macos-13
     steps:
-      - name: Set Xcode version
-        run: sudo xcode-select -s /Applications/Xcode_16.3.app
-      - name: Checkout repository
+      - name: Select Xcode 16.4
+        run: sudo xcode-select -s /Applications/Xcode_16.4.app
+
+      - name: Show Xcode version
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Checkout Repository
         uses: actions/checkout@v4
-      - name: Build DocC static site
-        uses: kiarashvosough1999/build-docC-static-site@v1.0.3
+
+      - name: Build DocC Archive & Static Site
+        run: |
+          set -euo pipefail
+
+          SCHEME="SwiftHelpers"
+          OUTPUT_DIR=".docs"
+          DERIVED_DATA=".docc-build"
+          HOSTING_BASE_PATH="SwiftHelpers"
+
+          echo "🛠️ Building documentation for scheme: $SCHEME"
+          xcodebuild docbuild \
+            -scheme "$SCHEME" \
+            -destination 'platform=iOS Simulator,name=iPhone 15' \
+            -derivedDataPath "$DERIVED_DATA"
+
+          ARCHIVE_PATH=$(find "$DERIVED_DATA" -name "*.doccarchive" | head -n 1)
+
+          echo "📁 Found doccarchive at: $ARCHIVE_PATH"
+
+          echo "🌐 Generating static site..."
+          docc process-archive \
+            transform-for-static-hosting "$ARCHIVE_PATH" \
+            --output-path "$OUTPUT_DIR" \
+            --hosting-base-path "$HOSTING_BASE_PATH"
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+
+      - name: Upload static site to Pages
+        uses: actions/upload-pages-artifact@v2
         with:
-          docC-generated-static-site-zipped-upload-name: docC_generated_site_zipped
+          path: .docs
 
   deploy:
     name: Deploy to GitHub Pages
@@ -29,10 +69,8 @@ jobs:
     needs: build
     environment:
       name: github-pages
-      url: ${{ steps.deploy.outputs.docC-page_url }}
+      url: ${{ steps.deploy.outputs.page_url }}
     steps:
-      - name: Deploy DocC site
+      - name: Deploy
         id: deploy
-        uses: kiarashvosough1999/docC-github-pages-deploy@v1.0.0
-        with:
-          docC-generated-static-site-uploaded-name: docC_generated_site_zipped
+        uses: actions/deploy-pages@v2
