@@ -34,35 +34,26 @@ jobs:
       - name: Build DocC Static Site
         run: |
           set -euo pipefail
-
-          SCHEME="SwiftHelpers"
-          OUTPUT_DIR=".docs"
-          DERIVED_DATA=".docc-build"
+          
+          BUILD_TARGET="SwiftHelpers"
+          OUTPUT_DIR="./docs"
           HOSTING_BASE_PATH="SwiftHelpers"
-
-          echo "📦 Building DocC for scheme: $SCHEME"
-          xcodebuild docbuild \
-            -scheme "$SCHEME" \
-            -destination 'platform=iOS Simulator,name=iPhone 16' \
-            -derivedDataPath "$DERIVED_DATA"
-
-          ARCHIVE_PATH=$(find "$DERIVED_DATA" -name "*.doccarchive" | head -n 1)
-
-          echo "📁 Found archive: $ARCHIVE_PATH"
-          echo "🌐 Generating static site..."
-
-          docc process-archive transform-for-static-hosting \
-            "$ARCHIVE_PATH" \
-            --output-path "$OUTPUT_DIR" \
-            --hosting-base-path "$HOSTING_BASE_PATH"
-
-      - name: Setup GitHub Pages
-        uses: actions/configure-pages@v3
-
-      - name: Upload Static Site
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: .docs
+  
+          swift package --allow-writing-to-directory $OUTPUT_DIR \
+            generate-documentation \
+            --target $BUILD_TARGET \
+            --output-path $OUTPUT_DIR \
+            --disable-indexing \
+            --transform-for-static-hosting \
+            --hosting-base-path $HOSTING_BASE_PATH
+  
+            - name: Setup GitHub Pages
+              uses: actions/configure-pages@v3
+  
+            - name: Upload Static Site
+              uses: actions/upload-pages-artifact@v3
+              with:
+                path: .docs
 
   deploy:
     name: Deploy to GitHub Pages
