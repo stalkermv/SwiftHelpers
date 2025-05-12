@@ -189,7 +189,7 @@ public extension Date {
     /// - Throws: A parsing error if the provided string cannot be parsed into a date.
     /// - Returns: A new date object created from the parsed ISO 8601 string.
     /// - Requires: iOS 15.0 or later.
-    @available(iOS 15.0, *)
+    @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
     static func iso8601(string: String) throws -> Date {
         let dateFormatStyle = Date.ISO8601FormatStyle(includingFractionalSeconds: true)
         let date = try Date(string, strategy: dateFormatStyle)
