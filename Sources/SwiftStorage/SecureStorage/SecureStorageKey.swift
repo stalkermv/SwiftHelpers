@@ -6,11 +6,11 @@
 //
 
 public protocol SecureStorageKey {
-    associatedtype Value: Codable, ExpressibleByNilLiteral
+    associatedtype Value: Codable
     static var defaultValue: Value { get }
 }
 
-extension SecureStorageKey {
+extension SecureStorageKey where Value: ExpressibleByNilLiteral {
     public static var defaultValue: Value { nil }
 }
 
@@ -22,7 +22,14 @@ extension SecureStorageKey {
 
 extension SecureStorage where Value: ExpressibleByNilLiteral {
     @MainActor
-    public init<K: SecureStorageKey>(_ key: K, defaultValue: K.Value = nil, store: SecureStorageService = KeychainSecureStorage.shared) where Value == K.Value {
-        self.init(K.key, defaultValue: defaultValue, store: store)
+    public init<K: SecureStorageKey>(_ key: K, store: SecureStorageService = KeychainSecureStorage.shared) where Value == K.Value {
+        self.init(K.key, defaultValue: K.defaultValue, store: store)
+    }
+}
+
+extension SecureStorage {
+    @MainActor
+    public init<K: SecureStorageKey>(_ key: K, store: SecureStorageService = KeychainSecureStorage.shared) where Value == K.Value {
+        self.init(K.key, defaultValue: K.defaultValue, store: store)
     }
 }
