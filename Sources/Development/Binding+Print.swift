@@ -5,6 +5,7 @@
 //  Created by Valeriy Malishevskyi on 06.10.2024.
 //
 
+#if canImport(SwiftUI)
 import SwiftUI
 
 extension Binding {
@@ -47,3 +48,4 @@ extension Binding {
         )
     }
 }
+#endif

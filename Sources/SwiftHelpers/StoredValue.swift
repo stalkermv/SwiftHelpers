@@ -5,7 +5,7 @@
 //  Created by Valeriy Malishevskyi on 13.12.2024.
 //
 
-import SwiftUI
+import Foundation
 
 @propertyWrapper
 public struct StoredValue<T> {

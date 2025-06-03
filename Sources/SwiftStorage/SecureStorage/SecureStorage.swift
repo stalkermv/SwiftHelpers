@@ -5,6 +5,7 @@
 //  Created by Valeriy Malishevskyi on 04.09.2024.
 //
 
+#if canImport(SwiftUI)
 import SwiftUI
 import FoundationExtensions
 
@@ -100,3 +101,4 @@ extension SecureStorage {
     }
 }
 
+#endif
