@@ -58,10 +58,17 @@ public extension Array {
     /// when sorting in descending order, non-`nil` values still come first, followed by `nil` values.
     func sorted<T: Comparable>(keyPath: KeyPath<Element, T?>, ascending: Bool = true) -> Self {
         sorted {
-            switch ($0[keyPath: keyPath], $1[keyPath: keyPath]) {
-            case (.some(let lhs), .some(let rhs)):
-                return ascending ? lhs < rhs : lhs > rhs
-            default:
+            let lhs = $0[keyPath: keyPath]
+            let rhs = $1[keyPath: keyPath]
+            
+            switch (lhs, rhs) {
+            case let (.some(l), .some(r)):
+                return ascending ? l < r : l > r
+            case (.some, .none):
+                return true
+            case (.none, .some):
+                return false
+            case (.none, .none):
                 return false
             }
         }
