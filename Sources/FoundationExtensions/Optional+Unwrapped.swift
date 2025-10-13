@@ -11,13 +11,16 @@ extension Optional {
     /// Unwrap the optional or throw an error
     /// - Parameter error: The error to throw if the optional is `nil`
     /// - Returns: The unwrapped value
-    public func unwrapped(or error: Error = OptionalUnwrapError.emptyValue) throws -> Wrapped {
+    public func unwrapped(
+        or error: Error? = nil,
+        file: StaticString = #file,
+        line: UInt = #line
+    ) throws -> Wrapped {
         switch self {
         case .some(let value):
             return value
         case .none:
-            print(error, "\(type(of: self))")
-            throw error
+            throw error ?? OptionalUnwrapError.emptyValue(file: file, line: line)
         }
     }
     
@@ -32,9 +35,9 @@ extension Optional {
     }
     
     public enum OptionalUnwrapError: LocalizedError {
-        case emptyValue
+        case emptyValue(Wrapped.Type = Wrapped.self, file: StaticString = #file, line: UInt = #line)
         case message(String)
-        
+
         public var recoverySuggestion: String? {
             switch self {
             case .emptyValue:

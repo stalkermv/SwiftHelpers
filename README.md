@@ -2,95 +2,200 @@
 
 [![Swift](https://github.com/stalkermv/SwiftHelpers/actions/workflows/tests.yml/badge.svg)](https://github.com/stalkermv/SwiftHelpers/actions/workflows/tests.yml)
 
-SwiftHelpers is a collection of convenient Swift extensions and helper functions designed to simplify common tasks and improve code readability in your Swift projects. These utilities cover a wide range of functionalities, from working with arrays and strings to manipulating dates and handling optional values.
+SwiftHelpers is a comprehensive collection of Swift extensions and utilities designed to simplify common tasks and improve code readability in your Swift projects. The library is organized into focused modules covering foundation extensions, secure storage, Combine utilities, and development tools.
 
-Features
---------
+## Modules
 
-*   Array extensions for sorting, subscripting, and mutation
-*   String extensions for regex evaluation and validation
-*   Date extensions for easy date manipulation and formatting
-*   Optional extensions for error handling and unwrapping
-*   Codable extensions for easy JSON encoding and decoding
-*   Sequence extensions for unique filtering and transformations
-*   Bundle extensions for retrieving app version and build information
-*   Comparable extensions for value clamping
+### SwiftHelpers
+The main module that combines FoundationExtensions and CombineExtensions for convenience.
 
-Installation
-------------
+### FoundationExtensions
+Core Swift and Foundation framework extensions:
+- **Array extensions** for safe subscripting, sorting, filtering, and mutations
+- **Sequence extensions** for unique filtering and transformations
+- **Optional extensions** for safe unwrapping with detailed error handling
+- **Comparable extensions** for value clamping
+- **Date extensions** for easy date manipulation and ISO8601 parsing
+- **Bundle extensions** for app version and build information
+- **Calendar extensions** for current date handling
+
+### SwiftStorage
+Secure storage solution with reactive updates:
+- **SecureStorage** property wrapper for SwiftUI with automatic observation
+- **KeychainSecureStorage** for secure keychain-based storage
+- **InMemorySecureStorage** for in-memory storage with observation
+- **DiskNonSecureStorage** for development/preview storage
+- **SecureStorageKey** protocol for type-safe storage keys
+- **AppStorageKey** protocol for enhanced AppStorage usage
+
+### CombineExtensions
+Combine framework utilities:
+- **TaskFuture** for bridging async/await with Combine publishers
+
+### Development
+Development and debugging utilities:
+- **String extensions** for Lorem ipsum generation
+- **URL extensions** for random image generation
+- **Binding extensions** for debug printing
+- **View extensions** for software keyboard enforcement
+
+## Installation
 
 ### Swift Package Manager
 
 Add the following line to the dependencies in your `Package.swift` file:
 
-swift
-
 ```swift
 .package(url: "https://github.com/stalkermv/SwiftHelpers", from: "1.0.0")
 ```
 
-Then, add `SwiftHelpers` to your target's dependencies:
-
-swift
+Then, add the desired modules to your target's dependencies:
 
 ```swift
-.target(name: "YourTarget", dependencies: ["SwiftHelpers"])
+.target(name: "YourTarget", dependencies: [
+    "SwiftHelpers",      // Main module (includes FoundationExtensions + CombineExtensions)
+    "SwiftStorage",      // Secure storage functionality
+    "Development"        // Development utilities
+])
 ```
 
-Usage
------
+## Usage
 
-After installing the library, simply import `SwiftHelpers` at the top of your Swift files and start using the provided extensions and helper functions.
-
+### Foundation Extensions
 
 ```swift
-import SwiftHelpers
+import FoundationExtensions
 
-// Example usage
-let numbers = [1, 3, 2, 4]
-let sortedNumbers = numbers.sorted { $0 < $1 }
+// Safe array subscripting
+let numbers = [1, 2, 3, 4, 5]
+let safeValue = numbers[safeIndex: 10] // Returns nil instead of crashing
 
-let dateString = "2023-01-01T12:00:00Z"
-let date = try? Date(iso8601: dateString)
+// Array sorting by key path
+struct Person {
+    let name: String
+    let age: Int
+}
+let people = [Person(name: "Alice", age: 30), Person(name: "Bob", age: 25)]
+let sortedByName = people.sorted(keyPath: \.name)
+let sortedByAge = people.sorted(keyPath: \.age, ascending: false)
+
+// Value clamping
+let clampedValue = 15.clamped(to: 10...20) // Returns 15
+let clampedHigh = 25.clamped(to: 10...20)  // Returns 20
+
+// Safe optional unwrapping with detailed errors
+let optionalValue: String? = nil
+do {
+    let value = try optionalValue.unwrapped()
+} catch {
+    print("Failed to unwrap: \(error)")
+}
+
+// Unique filtering
+let numbers = [1, 2, 2, 3, 3, 3, 4]
+let uniqueNumbers = numbers.unique() // [1, 2, 3, 4]
+let uniqueByProperty = people.unique(by: \.age)
 ```
 
-#### Storage
-The library defines two protocols for synchronous and asynchronous storage objects, respectively:
-
-*   `Storage`: A synchronous storage object that defines a set of methods for saving, loading, and removing encoded objects from a storage object.
-*   `AsyncStorage`: An asynchronous storage object that defines a set of methods for saving, loading, and removing encoded objects from a storage object asynchronously.
-
-The `Storage` target provides two default implementations of `Storage`:
-
-*   `KeychainStorage`: A synchronous storage object that uses the system keychain to store and retrieve data.
-*   `UserDefaults`: A synchronous storage object that uses the `UserDefaults` system to store and retrieve data.
-
-The library provides a property wrapper `StorableValue` that enables easy and safe storage of any `Codable` object. To use `StorableValue`, initialize it with the default value, a key, and a storage object.
+### Secure Storage
 
 ```swift
-import SwiftHelpers
-import Storage
+import SwiftStorage
+import SwiftUI
 
-// Example usage of StorableValue with UserDefaults
-@StorableValue(key: "exampleKey", storage: .userDefaults)
-var exampleValue: String = "default"
-
-// Example usage of StorableValue with KeychainStorage
-@StorableValue(key: "exampleKey", storage: .userDefaults)
-var secureValue: ExampleStruct? = nil
-
-enum ExampleEnum: String, Codable {
-    case firstCase
-    case secondCase
+// Basic secure storage with automatic observation
+struct ContentView: View {
+    @SecureStorage("user_preference", defaultValue: "default")
+    var userPreference: String
+    
+    var body: some View {
+        VStack {
+            Text("Current preference: \(userPreference)")
+            Button("Update Preference") {
+                userPreference = "updated_\(Date().timeIntervalSince1970)"
+            }
+            if let error = _userPreference.error {
+                Text("Error: \(error.localizedDescription)")
+            }
+        }
+    }
 }
 
-struct ExampleStruct: Codable {
-    var intValue: Int
-    var stringValue: String
-    var enumValue: ExampleEnum
+// Type-safe storage with keys
+enum UserSettings: SecureStorageKey {
+    typealias Value = String
+    static var defaultValue: String = "default"
 }
 
-secureValue = ExampleStruct(intValue: 123, stringValue: "example", enumValue: .firstCase)
+struct SettingsView: View {
+    @SecureStorage(UserSettings.self)
+    var userSetting: String
+    
+    var body: some View {
+        Text("Setting: \(userSetting)")
+    }
+}
+
+// Custom storage service
+struct ContentView: View {
+    @SecureStorage("key", defaultValue: "default", store: InMemorySecureStorage.shared)
+    var value: String
+    
+    var body: some View {
+        Text(value)
+    }
+}
+```
+
+### Combine Extensions
+
+```swift
+import CombineExtensions
+import Combine
+
+// Bridge async/await with Combine
+let future = TaskFuture<Int, Error> {
+    try await Task.sleep(nanoseconds: 1_000_000_000)
+    return 42
+}
+
+future
+    .sink(
+        receiveCompletion: { completion in
+            switch completion {
+            case .finished:
+                print("Completed successfully")
+            case .failure(let error):
+                print("Failed with error: \(error)")
+            }
+        },
+        receiveValue: { value in
+            print("Received value: \(value)")
+        }
+    )
+```
+
+### Development Utilities
+
+```swift
+import Development
+
+// Lorem ipsum generation
+let sentence = String.randomSentence()
+let paragraph = String.randomParagraph()
+let lorem = String.randomLorem()
+
+// Random image URLs
+let imageURL = URL.randomImage(width: 300, height: 200)
+
+// Debug binding printing
+@State private var count = 0
+var body: some View {
+    Stepper("Count", value: $count.print("Counter"))
+}
+// Console output:
+// {< GET} Counter: 0
+// {> SET} Counter: 1
 ```
 
 Contributing

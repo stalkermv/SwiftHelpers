@@ -6,13 +6,16 @@
 //
 
 import Foundation
+import Combine
 
 public final class KeychainSecureStorage {
     
     private let keychain: Keychain
+    private let changePublisher = PassthroughSubject<String, Never>()
+//    private let observers = KeychainObserverRegistry()
     
     /// Initialize with a default service name and access mode
-    private init(serviceName: String = Bundle.main.serviceName) {
+    init(serviceName: String = Bundle.main.serviceName) {
         self.keychain = Keychain(
             serviceName: serviceName,
             accessMode: kSecAttrAccessibleWhenUnlockedThisDeviceOnly as String
@@ -20,8 +23,6 @@ public final class KeychainSecureStorage {
     }
     
     @MainActor public static let shared = KeychainSecureStorage()
-    
-    var subscriptions: [Subscription] = []
     
     /// Convenience method to convert AnyHashable to String
     private func keyAsString(_ key: AnyHashable) -> String {
@@ -33,6 +34,7 @@ public final class KeychainSecureStorage {
 }
 
 extension KeychainSecureStorage: SecureStorageService {
+    
     public func value<T>(type: T.Type, forKey key: String) throws -> T
     where T: Decodable {
         guard let data = try keychain.getData(key: key) else {
@@ -47,34 +49,31 @@ extension KeychainSecureStorage: SecureStorageService {
         }
         
         keychain.addOrUpdate(key: key, data: data)
-        
-        
-        for subscription in subscriptions {
-            subscription.update()
+        changePublisher.send(key)
+    }
+    
+    public func observe<T: Codable & Sendable>(key: String) -> AsyncThrowingStream<T, Error> {
+        AsyncThrowingStream { continuation in
+            do {
+                let value = try self.value(type: T.self, forKey: key)
+                continuation.yield(value)
+            } catch {
+                continuation.finish(throwing: error)
+                return
+            }
+            
+            let subscription = changePublisher
+                .filter { $0 == key }
+                .sink { _ in
+                    if let value: T = try? self.value(type: T.self, forKey: key) {
+                        continuation.yield(value)
+                    }
+                }
+            
+            continuation.onTermination = { @Sendable _ in
+                subscription.cancel()
+            }
         }
-    }
-    
-    public func subscribe(subscription: Subscription) {
-        subscriptions.append(subscription)
-    }
-    
-    public func unsubscribe(subscription: Subscription) {
-        subscriptions.removeAll(where: { $0.key == subscription.key })
-    }
-}
-
-enum SecureStorageError: Error {
-    case valueNotFound
-    case encodingFailed
-}
-
-public struct Subscription: Sendable {
-    let key: String
-    let update: @MainActor @Sendable () -> Void
-    
-    public init(key: String, update: @MainActor @escaping () -> Void) {
-        self.key = key
-        self.update = update
     }
 }
 

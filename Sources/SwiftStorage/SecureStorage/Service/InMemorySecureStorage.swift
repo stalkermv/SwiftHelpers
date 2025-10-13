@@ -6,11 +6,12 @@
 //
 
 import Foundation
+import Combine
 
 public final class InMemorySecureStorage {
     
     private let storage = NSCache<NSString, NSData>()
-    private var subscriptions: [Subscription] = []
+    private let changePublisher = PassthroughSubject<String, Never>()
     
     /// Initialize with a default service name and access mode
     private init() {}
@@ -40,21 +41,31 @@ extension InMemorySecureStorage: SecureStorageService {
             throw SecureStorageError.encodingFailed
         }
         
-        for subscription in subscriptions {
-            Task {
-                subscription.update()
+        storage.setObject(data as NSData, forKey: key as NSString)
+        changePublisher.send(key)
+    }
+    
+    public func observe<T: Codable & Sendable>(key: String) -> AsyncThrowingStream<T, Error> {
+        AsyncThrowingStream { continuation in
+            do {
+                let value = try self.value(type: T.self, forKey: key)
+                continuation.yield(value)
+            } catch {
+                continuation.finish(throwing: error)
+                return
+            }
+            
+            let subscription = changePublisher
+                .filter { $0 == key }
+                .sink { _ in
+                    if let value: T = try? self.value(type: T.self, forKey: key) {
+                        continuation.yield(value)
+                    }
+                }
+            
+            continuation.onTermination = { @Sendable _ in
+                subscription.cancel()
             }
         }
-        
-        storage.setObject(data as NSData, forKey: key as NSString)
-    }
-    
-    public func subscribe(subscription: Subscription) {
-        subscriptions.append(subscription)
-        print("Subscribed to \(subscription.key)")
-    }
-    
-    public func unsubscribe(subscription: Subscription) {
-        subscriptions.removeAll { $0.key == subscription.key }
     }
 }
