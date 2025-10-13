@@ -29,7 +29,7 @@ public struct SecureStorage<Value>: DynamicProperty where Value: Codable & Senda
                 storage = InMemorySecureStorage.shared
             }
             #else
-            finalStore = store
+            storage = store
             #endif
         } else {
             storage = store
