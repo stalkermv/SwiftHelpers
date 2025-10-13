@@ -8,4 +8,5 @@
 enum SecureStorageError: Error {
     case valueNotFound
     case encodingFailed
+    case documentDirectoryNotFound
 }

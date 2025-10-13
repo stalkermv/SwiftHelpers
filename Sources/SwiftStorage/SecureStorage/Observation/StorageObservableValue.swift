@@ -9,14 +9,14 @@ import Foundation
 import SwiftUI
 
 @MainActor
-final class StorageObservableValue<Value: Codable>: ObservableObject {
+final class StorageObservableValue<Value: Codable & Sendable>: ObservableObject {
     let storage: SecureStorageService
     let key: String
     
     @Published private(set) var value: Value
     @Published var error: Error?
     
-    var task: Task<Void, Error>?
+    var task: Task<Void, Never>?
     
     init(storage: SecureStorageService, key: String, initialValue value: Value) {
         self.storage = storage
@@ -36,9 +36,23 @@ final class StorageObservableValue<Value: Codable>: ObservableObject {
     func subscribe() {
         guard task == nil else { return }
         task = Task {
-            for try await value in storage.observe(key: key) as AsyncStream<Value> {
-                self.value = value
+            do {
+                for try await value in storage.observe(key: key) as AsyncThrowingStream<Value, Error> {
+                    self.value = value
+                    self.error = nil
+                }
+            } catch {
+                self.error = error
             }
         }
+    }
+    
+    func unsubscribe() {
+        task?.cancel()
+        task = nil
+    }
+    
+    deinit {
+        task?.cancel()
     }
 }

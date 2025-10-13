@@ -45,6 +45,10 @@ let package = Package(
         .testTarget(
             name: "CombineExtensionsTests",
             dependencies: ["CombineExtensions"]
+        ),
+        .testTarget(
+            name: "SwiftStorageTests",
+            dependencies: ["SwiftStorage"]
         )
     ]
 )

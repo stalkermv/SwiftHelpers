@@ -16,30 +16,65 @@ struct DiskNonSecureStorage: SecureStorageService {
     
     let changePublisher = PassthroughSubject<String, Never>()
     
-    init(fileName: String, fileManager: FileManager = .default) {
+    init(fileName: String, fileManager: FileManager = .default) throws {
         self.fileName = fileName
         self.fileManager = fileManager
         
-        createFileIfNeeded()
+        try createFileIfNeeded()
     }
     
-    private func createFileIfNeeded() {
-        let url = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!.appendingPathComponent(fileName)
+    private func documentDirectoryURL() throws -> URL {
+        guard let url = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            throw SecureStorageError.documentDirectoryNotFound
+        }
+        return url
+    }
+    
+    private func fileURL() throws -> URL {
+        return try documentDirectoryURL().appendingPathComponent(fileName)
+    }
+    
+    private func createFileIfNeeded() throws {
+        let url = try fileURL()
         if !fileManager.fileExists(atPath: url.path) {
-            try? Data().write(to: url)
+            // Initialize with empty dictionary
+            let emptyDictionary: [String: Data] = [:]
+            let data = try JSONEncoder().encode(emptyDictionary)
+            try data.write(to: url)
         }
     }
     
     func value<T>(type: T.Type, forKey key: String) throws -> T where T : Decodable {
-        let url = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!.appendingPathComponent(fileName)
+        let url = try fileURL()
         let data = try Data(contentsOf: url)
-        return try JSONDecoder().decode(T.self, from: data)
+        
+        // Decode the dictionary of key-value pairs
+        let dictionary = try JSONDecoder().decode([String: Data].self, from: data)
+        
+        guard let keyData = dictionary[key] else {
+            throw SecureStorageError.valueNotFound
+        }
+        
+        return try JSONDecoder().decode(T.self, from: keyData)
     }
 
     func set<T>(_ value: T, forKey key: String) throws where T : Encodable {
-        let data = try JSONEncoder().encode(value)
-        let url = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!.appendingPathComponent(fileName)
-        try data.write(to: url)
+        let url = try fileURL()
+        
+        // Read existing dictionary or create new one
+        var dictionary: [String: Data] = [:]
+        if fileManager.fileExists(atPath: url.path) {
+            let data = try Data(contentsOf: url)
+            dictionary = try JSONDecoder().decode([String: Data].self, from: data)
+        }
+        
+        // Encode the new value and store it in the dictionary
+        let valueData = try JSONEncoder().encode(value)
+        dictionary[key] = valueData
+        
+        // Write the updated dictionary back to the file
+        let dictionaryData = try JSONEncoder().encode(dictionary)
+        try dictionaryData.write(to: url)
         
         changePublisher.send(key)
     }

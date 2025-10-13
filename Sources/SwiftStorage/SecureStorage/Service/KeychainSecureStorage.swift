@@ -6,10 +6,12 @@
 //
 
 import Foundation
+import Combine
 
 public final class KeychainSecureStorage {
     
     private let keychain: Keychain
+    private let changePublisher = PassthroughSubject<String, Never>()
 //    private let observers = KeychainObserverRegistry()
     
     /// Initialize with a default service name and access mode
@@ -47,6 +49,31 @@ extension KeychainSecureStorage: SecureStorageService {
         }
         
         keychain.addOrUpdate(key: key, data: data)
+        changePublisher.send(key)
+    }
+    
+    public func observe<T: Codable & Sendable>(key: String) -> AsyncThrowingStream<T, Error> {
+        AsyncThrowingStream { continuation in
+            do {
+                let value = try self.value(type: T.self, forKey: key)
+                continuation.yield(value)
+            } catch {
+                continuation.finish(throwing: error)
+                return
+            }
+            
+            let subscription = changePublisher
+                .filter { $0 == key }
+                .sink { _ in
+                    if let value: T = try? self.value(type: T.self, forKey: key) {
+                        continuation.yield(value)
+                    }
+                }
+            
+            continuation.onTermination = { @Sendable _ in
+                subscription.cancel()
+            }
+        }
     }
 }
 

@@ -10,7 +10,7 @@ import SwiftUI
 import FoundationExtensions
 
 @propertyWrapper @MainActor
-public struct SecureStorage<Value>: DynamicProperty where Value: Codable {
+public struct SecureStorage<Value>: DynamicProperty where Value: Codable & Sendable {
     
     @StateObject private var observableValue: StorageObservableValue<Value>
     
@@ -19,18 +19,24 @@ public struct SecureStorage<Value>: DynamicProperty where Value: Codable {
         defaultValue: Value,
         store: SecureStorageService = KeychainSecureStorage.shared
     ) {
-        let store = if ProcessInfo.isPreview {
+        let storage: SecureStorageService
+        if ProcessInfo.isPreview {
             #if DEBUG
-            DiskNonSecureStorage(fileName: "preview_secure_storage.json")
+            do {
+                storage = try DiskNonSecureStorage(fileName: "preview_secure_storage.json")
+            } catch {
+                // Fallback to in-memory storage if document directory is not available
+                storage = InMemorySecureStorage.shared
+            }
             #else
-            store
+            finalStore = store
             #endif
         } else {
-            store
+            storage = store
         }
         let observableValue = StorageObservationsRegistrar.shared.observation(forKey: key)
         ?? StorageObservableValue(
-            storage: store,
+            storage: storage,
             key: key,
             initialValue: defaultValue
         )
@@ -66,23 +72,3 @@ extension SecureStorage where Value: ExpressibleByNilLiteral {
 }
 
 #endif
-
-
-private struct PreviewView: View {
-    @SecureStorage("exampleKey", defaultValue: "Default Value")
-    var exampleValue: String?
-    
-    var body: some View {
-        Button("Update Value \(exampleValue)") {
-            exampleValue = "Updated Value \(Date())"
-        }
-        if let error = _exampleValue.error {
-            Text("Error: \(String(describing: error))")
-        }
-    }
-}
-#Preview {
-    PreviewView()
-    PreviewView()
-}
-
