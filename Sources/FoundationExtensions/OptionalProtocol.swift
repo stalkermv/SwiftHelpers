@@ -62,11 +62,12 @@ extension Optional: OptionalProtocol {
     /// ```
     ///
     /// - Throws: `OptionalUnwrapError.emptyValue` if the optional is `.none`.
+    @available(*, deprecated, message: "Use unwrapped() instead")
     public var wrappedValue: Wrapped {
         get throws {
             switch self {
             case .none:
-                throw OptionalUnwrapError.emptyValue
+                throw OptionalUnwrapError.emptyValue()
             case .some(let value):
                 return value
             }

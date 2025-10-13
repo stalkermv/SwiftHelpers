@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct HexColorContainer: Sendable, Hashable {
+public struct HexColorContainer: Sendable, Hashable, Codable {
     
     public let red: CGFloat
     public let green: CGFloat
