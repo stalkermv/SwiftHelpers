@@ -10,7 +10,6 @@ import Foundation
 public final class InMemorySecureStorage {
     
     private let storage = NSCache<NSString, NSData>()
-    private var subscriptions: [Subscription] = []
     
     /// Initialize with a default service name and access mode
     private init() {}
@@ -40,21 +39,6 @@ extension InMemorySecureStorage: SecureStorageService {
             throw SecureStorageError.encodingFailed
         }
         
-        for subscription in subscriptions {
-            Task {
-                subscription.update()
-            }
-        }
-        
         storage.setObject(data as NSData, forKey: key as NSString)
-    }
-    
-    public func subscribe(subscription: Subscription) {
-        subscriptions.append(subscription)
-        print("Subscribed to \(subscription.key)")
-    }
-    
-    public func unsubscribe(subscription: Subscription) {
-        subscriptions.removeAll { $0.key == subscription.key }
     }
 }
