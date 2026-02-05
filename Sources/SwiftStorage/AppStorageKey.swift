@@ -43,6 +43,10 @@ extension AppStorage {
         self.init(wrappedValue: K.defaultValue, K.key, store: store)
     }
     
+    public init<K: AppStorageKey>(_ key: K, store: UserDefaults? = nil) where Value == K.Value, K.Value == Bool {
+        self.init(wrappedValue: K.defaultValue, K.key, store: store)
+    }
+    
     public init<K: AppStorageKey>(_ key: K, store: UserDefaults? = nil) where Value == K.Value, K.Value: RawRepresentable, K.Value.RawValue == String {
         self.init(wrappedValue: K.defaultValue, K.key, store: store)
     }
@@ -58,6 +62,10 @@ extension AppStorage where Value: ExpressibleByNilLiteral {
     }
     
     public init<K: AppStorageKey>(_ key: K, store: UserDefaults? = nil) where Value == K.Value, K.Value == Int? {
+        self.init(K.key, store: store)
+    }
+    
+    public init<K: AppStorageKey>(_ key: K, store: UserDefaults? = nil) where Value == K.Value, K.Value == Bool? {
         self.init(K.key, store: store)
     }
     
