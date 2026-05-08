@@ -27,6 +27,8 @@ Secure storage solution with reactive updates:
 - **DiskNonSecureStorage** for development/preview storage
 - **SecureStorageKey** protocol for type-safe storage keys
 - **AppStorageKey** protocol for enhanced AppStorage usage
+- **SceneStorageKey** protocol for enhanced SceneStorage usage
+- **AppStorage.Codable / SceneStorage.Codable** for Data-backed Codable values
 
 ### CombineExtensions
 Combine framework utilities:
@@ -143,6 +145,61 @@ struct ContentView: View {
     
     var body: some View {
         Text(value)
+    }
+}
+
+enum SidebarSelection: String {
+    case inbox
+    case archive
+}
+
+struct SidebarSelectionSceneStorageKey: SceneStorageKey {
+    static let defaultValue: SidebarSelection = .inbox
+}
+
+extension SceneStorageKeys {
+    var sidebarSelection: SidebarSelectionSceneStorageKey { .init() }
+}
+
+struct SceneRootView: View {
+    @SceneStorage(\.sidebarSelection) private var selection
+
+    var body: some View {
+        Text(selection.rawValue)
+    }
+}
+
+struct ConversationState: Codable {
+    var selectedID: String?
+}
+
+struct ConversationAppStorageKey: AppStorageKey {
+    static let defaultValue = ConversationState(selectedID: nil)
+}
+
+extension AppStorageKey where Self == ConversationAppStorageKey {
+    static var conversationState: Self { .init() }
+}
+
+struct ConversationSceneStorageKey: SceneStorageKey {
+    static let defaultValue = ConversationState(selectedID: nil)
+}
+
+extension SceneStorageKey where Self == ConversationSceneStorageKey {
+    static var conversationState: Self { .init() }
+}
+
+extension SceneStorageKeys {
+    var conversationSceneState: ConversationSceneStorageKey { .init() }
+}
+
+struct CodableStorageView: View {
+    @AppStorage.Codable(.conversationState) private var appState
+    @SceneStorage.Codable(.conversationState) private var sceneState
+    @SceneStorage.Codable(\.conversationSceneState) private var keyPathSceneState
+
+    var body: some View {
+        Text(appState.selectedID ?? sceneState.selectedID ?? keyPathSceneState.selectedID ?? "none")
     }
 }
 ```
