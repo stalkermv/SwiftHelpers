@@ -21,10 +21,12 @@ Core Swift and Foundation framework extensions:
 
 ### SwiftStorage
 Secure storage solution with reactive updates:
-- **SecureStorage** property wrapper for SwiftUI with automatic observation
-- **KeychainSecureStorage** for secure keychain-based storage
-- **InMemorySecureStorage** for in-memory storage with observation
-- **DiskNonSecureStorage** for development/preview storage
+- **SecureStorage** `DynamicProperty` for SwiftUI with automatic observation
+- **SecureStorageBackend** protocol for custom backend implementations
+- **SystemSecureStorageBackend** for automatic preview/file vs keychain selection
+- **KeychainSecureStorageBackend** for secure keychain-backed storage
+- **FileSecureStorageBackend** for file-backed storage in temporary directories
+- **InMemorySecureStorageBackend** for isolated in-memory storage
 - **SecureStorageKey** protocol for type-safe storage keys
 - **AppStorageKey** protocol for enhanced AppStorage usage
 - **SceneStorageKey** protocol for enhanced SceneStorage usage
@@ -105,11 +107,12 @@ let uniqueByProperty = people.unique(by: \.age)
 import SwiftStorage
 import SwiftUI
 
-// Basic secure storage with automatic observation
+// SystemSecureStorageBackend is the default.
+// In previews it uses a temporary file store, and on device it prefers Keychain.
 struct ContentView: View {
     @SecureStorage("user_preference", defaultValue: "default")
-    var userPreference: String
-    
+    private var userPreference: String
+
     var body: some View {
         VStack {
             Text("Current preference: \(userPreference)")
@@ -123,28 +126,35 @@ struct ContentView: View {
     }
 }
 
-// Type-safe storage with keys
-enum UserSettings: SecureStorageKey {
-    typealias Value = String
-    static var defaultValue: String = "default"
+struct UserSettingKey: SecureStorageKey {
+    static let defaultValue = "default"
+    init() {}
 }
 
 struct SettingsView: View {
-    @SecureStorage(UserSettings.self)
-    var userSetting: String
-    
+    @SecureStorage(UserSettingKey())
+    private var userSetting: String
+
     var body: some View {
         Text("Setting: \(userSetting)")
     }
 }
 
-// Custom storage service
-struct ContentView: View {
-    @SecureStorage("key", defaultValue: "default", store: InMemorySecureStorage.shared)
-    var value: String
-    
+struct PreviewRoot: View {
+    private let backend = InMemorySecureStorageBackend(scope: "preview")
+
     var body: some View {
-        Text(value)
+        ContentView()
+            .defaultSecureStorage(backend)
+    }
+}
+
+struct ExplicitBackendView: View {
+    @SecureStorage("api_token", defaultValue: "", backend: InMemorySecureStorageBackend(scope: "demo"))
+    private var token: String
+
+    var body: some View {
+        Text(token.isEmpty ? "Missing token" : "Token is stored")
     }
 }
 

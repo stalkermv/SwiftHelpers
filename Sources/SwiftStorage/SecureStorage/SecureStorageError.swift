@@ -1,12 +1,8 @@
-//
-//  SecureStorageError.swift
-//  SwiftHelpers
-//
-//  Created by Valeriy Malishevskyi on 13.10.2025.
-//
+import Foundation
 
-enum SecureStorageError: Error {
-    case valueNotFound
+public enum SecureStorageError: Error, Equatable {
     case encodingFailed
-    case documentDirectoryNotFound
+    case decodingFailed
+    case keychainFailure(status: OSStatus)
+    case fileSystemFailure(String)
 }

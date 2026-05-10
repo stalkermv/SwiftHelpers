@@ -1,12 +1,5 @@
-//
-//  SecureStorageKey.swift
-//  SwiftUIHelpers
-//
-//  Created by Valeriy Malishevskyi on 04.09.2024.
-//
-
 public protocol SecureStorageKey {
-    associatedtype Value: Codable
+    associatedtype Value: Codable & Sendable
     static var defaultValue: Value { get }
 }
 
@@ -22,14 +15,14 @@ extension SecureStorageKey {
 
 extension SecureStorage where Value: ExpressibleByNilLiteral {
     @MainActor
-    public init<K: SecureStorageKey>(_ key: K, store: SecureStorageService = KeychainSecureStorage.shared) where Value == K.Value {
-        self.init(K.key, defaultValue: K.defaultValue, store: store)
+    public init<K: SecureStorageKey>(_ key: K, backend: (any SecureStorageBackend)? = nil) where Value == K.Value {
+        self.init(K.key, defaultValue: K.defaultValue, backend: backend)
     }
 }
 
 extension SecureStorage {
     @MainActor
-    public init<K: SecureStorageKey>(_ key: K, store: SecureStorageService = KeychainSecureStorage.shared) where Value == K.Value {
-        self.init(K.key, defaultValue: K.defaultValue, store: store)
+    public init<K: SecureStorageKey>(_ key: K, backend: (any SecureStorageBackend)? = nil) where Value == K.Value {
+        self.init(K.key, defaultValue: K.defaultValue, backend: backend)
     }
 }
