@@ -57,8 +57,15 @@ private struct Undecodable: Codable {
 private final class ReferenceValue: Codable {
     var n: Int
     init(_ n: Int) { self.n = n }
+
+    func encode(to encoder: Encoder) throws {
+        if n < 0 { throw FixtureError.rejected }
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(n, forKey: .n)
+    }
 }
 
+@available(macOS 14, iOS 17, tvOS 17, watchOS 10, *)
 private struct Marker: TransactionKey { static let defaultValue = 0 }
 
 @MainActor @Suite(.serialized)
@@ -161,6 +168,42 @@ struct CodableSceneStorageTests {
         #expect(cached.n == 2)
         let rebuilt = CodableSceneStorageCache<ReferenceValue>()
         #expect(try #require(rebuilt.decode(bytes, forKey: "a")).n == 1)
+    }
+
+    @Test("A successful same-byte assignment replaces a mutated memoized reference")
+    func referenceAssignment() throws {
+        let cache = CodableSceneStorageCache<ReferenceValue>()
+        let initialBytes = try JSONEncoder().encode(ReferenceValue(1))
+        var bytes = initialBytes
+        let native = Binding(get: { bytes }, set: { bytes = $0 })
+        let binding = cache.binding(to: native, key: "a", defaultValue: ReferenceValue(0))
+        let first = binding.wrappedValue
+        first.n = 2
+
+        binding.wrappedValue = ReferenceValue(1)
+
+        #expect(bytes == initialBytes)
+        let current = binding.wrappedValue
+        #expect(current.n == 1)
+        #expect(current !== first)
+        #expect(binding.wrappedValue === current)
+    }
+
+    @Test("A rejected assignment preserves the memoized reference and stored bytes")
+    func rejectedReferenceAssignment() throws {
+        let cache = CodableSceneStorageCache<ReferenceValue>()
+        let initialBytes = try JSONEncoder().encode(ReferenceValue(1))
+        var bytes = initialBytes
+        let native = Binding(get: { bytes }, set: { bytes = $0 })
+        let binding = cache.binding(to: native, key: "a", defaultValue: ReferenceValue(0))
+        let first = binding.wrappedValue
+        first.n = 2
+
+        binding.wrappedValue = ReferenceValue(-1)
+
+        #expect(bytes == initialBytes)
+        #expect(binding.wrappedValue === first)
+        #expect(binding.wrappedValue.n == 2)
     }
 
     @Test("Reference defaults are returned directly and are not cloned")

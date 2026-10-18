@@ -28,7 +28,9 @@ final class CodableSceneStorageCache<Value: Swift.Codable>: ObservableObject {
 
     func encode(_ value: Value) -> Data? {
         do {
-            return try JSONEncoder().encode(value)
+            let data = try JSONEncoder().encode(value)
+            entry = nil
+            return data
         } catch {
             Logger.sceneStorage.error("SceneStorage Codable value could not be encoded; write rejected.")
             return nil
@@ -50,6 +52,7 @@ final class CodableSceneStorageCache<Value: Swift.Codable>: ObservableObject {
 ///
 /// Reads always consult native scene bytes. Successful decoding is memoized while
 /// the key and bytes match; missing or invalid bytes return the declared default.
+/// Successful assignments clear the memoized value, even when bytes are unchanged.
 /// Reference values may retain their identity between reads. Mutating a reference
 /// without assigning through this property does not persist it.
 @propertyWrapper

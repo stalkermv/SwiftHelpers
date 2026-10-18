@@ -226,11 +226,13 @@ incompatible JSON returns the current declared default without rewriting bytes.
 An Optional `nil` is stored as JSON `null`, so it remains distinct from missing
 data even with a nonnil default.
 
-Writes use standard `JSONEncoder`/`JSONDecoder` strategies. An encoding failure
-leaves the stored bytes unchanged and emits a fixed system diagnostic without the
-key, payload or error text. If encoding succeeds but decoding later fails, the
-bytes remain stored and reads return the default. Defaults are never encoded
-during initialization. Bindings forward their transaction to the native binding.
+Writes use standard `JSONEncoder`/`JSONDecoder` strategies. A successful assignment
+clears the local decoded cache even when the encoded bytes are unchanged. An
+encoding failure leaves both the stored bytes and cache unchanged and emits a
+fixed system diagnostic without the key, payload or error text. If encoding
+succeeds but decoding later fails, the bytes remain stored and reads return the
+default. Defaults are never encoded during initialization. Bindings forward their
+transaction to the native binding.
 
 A cached reference value may be the same object on subsequent reads. Mutating it
 without assigning through the property does not persist it. Reference defaults
