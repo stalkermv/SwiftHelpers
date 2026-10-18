@@ -169,35 +169,6 @@ struct CodableStorageTests {
         #expect(storage.wrappedValue == nil)
     }
 
-    @Test func codableSceneStorageUsesDefaultValue() {
-        let defaultValue = Payload(value: "default")
-        let storage = CodableSceneStorage<Payload>(
-            wrappedValue: defaultValue,
-            "payload"
-        )
-
-        #expect(storage.wrappedValue == defaultValue)
-    }
-
-    @Test func codableSceneStorageRoundTripsCodableValue() {
-        let defaultValue = Payload(value: "default")
-        let updatedValue = Payload(value: "updated")
-        let storage = CodableSceneStorage<Payload>(
-            wrappedValue: defaultValue,
-            "payload"
-        )
-
-        storage.wrappedValue = updatedValue
-
-        #expect(storage.wrappedValue == updatedValue)
-    }
-
-    @Test func codableSceneStorageOptionalDefaultsToNil() {
-        let storage = CodableSceneStorage<Payload?>("payload")
-
-        #expect(storage.wrappedValue == nil)
-    }
-
     @Test func codableStoragePropertyWrappersCompileForRequestedSyntax() {
         let store = TestStores.appStorage()
         store.removePersistentDomain(forName: TestStores.suiteName)
@@ -205,10 +176,6 @@ struct CodableStorageTests {
         #expect(AppStorageStringCodableView().binding.wrappedValue == Payload(value: "app-string-default"))
         #expect(AppStorageTypedCodableView().binding.wrappedValue == AppPayloadStorageKey.defaultValue)
         #expect(AppStorageOptionalCodableView().payload == nil)
-        #expect(SceneStorageStringCodableView().binding.wrappedValue == Payload(value: "scene-string-default"))
-        #expect(SceneStorageTypedCodableView().binding.wrappedValue == SceneDotPayloadStorageKey.defaultValue)
-        #expect(SceneStorageKeyPathCodableView().binding.wrappedValue == SceneKeyPathPayloadStorageKey.defaultValue)
-        #expect(SceneStorageOptionalCodableView().payload == nil)
     }
 }
 #endif

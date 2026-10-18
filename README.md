@@ -214,6 +214,41 @@ struct CodableStorageView: View {
 }
 ```
 
+`SceneStorage.Codable` uses native scene storage without a setup modifier. Its
+value and binding accessors run on the main actor; initialization does not require
+a main-actor context. Values only need `Codable`, including reference types that
+are not `Sendable` or `Equatable`.
+
+Each read consults the current native `Data`. Successful decoding is reused while
+the key and complete bytes match, including across view updates with the same
+identity. A new view identity creates a fresh cache. Missing, empty, malformed or
+incompatible JSON returns the current declared default without rewriting bytes.
+An Optional `nil` is stored as JSON `null`, so it remains distinct from missing
+data even with a nonnil default.
+
+Writes use standard `JSONEncoder`/`JSONDecoder` strategies. An encoding failure
+leaves the stored bytes unchanged and emits a fixed system diagnostic without the
+key, payload or error text. If encoding succeeds but decoding later fails, the
+bytes remain stored and reads return the default. Defaults are never encoded
+during initialization. Bindings forward their transaction to the native binding.
+
+A cached reference value may be the same object on subsequent reads. Mutating it
+without assigning through the property does not persist it. Reference defaults
+are returned directly without cloning, and custom decoding side effects do not
+repeat on cache hits.
+
+Typed keys retain their existing type-name identity: renaming a key type can
+change its storage key, and equal type names can collide. Use a string key when
+explicit stable identity is required. Changing a key at an existing view identity
+follows native `SceneStorage` location behavior; recreate that identity when a
+new storage location is required. A previously captured binding keeps its native
+location and default snapshot.
+
+Use this storage for small UI state. Scene isolation, restoration timing and
+durability are provided by SwiftUI. Hosting configurations that do not update
+native `SceneStorage` have the same limitation here; the library adds no window
+revision relay. `AppStorage.Codable` retains its existing behavior.
+
 ### Combine Extensions
 
 ```swift
