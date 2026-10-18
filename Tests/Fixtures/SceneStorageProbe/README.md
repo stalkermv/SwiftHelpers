@@ -4,9 +4,14 @@ This independent Swift package imports the actual local `SwiftStorage` product.
 It does not copy the wrapper or require a library setup modifier. The fixture
 requires macOS 14 or iOS 17; the library deployment floors are unchanged.
 
+The root `swift test` command runs the library's unit tests. It does not build or
+launch this nested executable package. Build it explicitly for API compile
+coverage, or use the runner below for installed-scene assertions.
+
 Run from the repository root with a fresh absolute evidence directory:
 
 ```sh
+swift build --package-path Tests/Fixtures/SceneStorageProbe --scratch-path /tmp/scene-build-macos
 Tests/Fixtures/SceneStorageProbe/run_probe.sh macos --evidence /tmp/scene-peer-macos
 Tests/Fixtures/SceneStorageProbe/run_probe.sh ios --device <booted-iPad-UDID> --evidence /tmp/scene-peer-ios
 Tests/Fixtures/SceneStorageProbe/run_probe.sh macos --suite full --evidence /tmp/scene-full-macos
@@ -37,6 +42,8 @@ is performed. Each run uses a unique bundle identifier and stops only its app.
 
 Evidence includes exact commands/statuses, source hashes, OS/Swift versions,
 raw JSONL and named assertions. Runtime waits are bounded to 30 seconds per
-launch. Build artifacts remain in the requested evidence directory. APIForms.swift
-is compile-only coverage for all four public forms and non-Sendable reference
-values; it is not an executable assertion about uninstalled wrappers.
+launch. Build artifacts remain in the requested evidence directory.
+[APIForms.swift](Sources/SceneStorageProbe/APIForms.swift) is compiled as part of
+the executable target and covers all four public forms, non-Sendable reference
+values and initialization outside the main actor. Those declarations provide
+compile coverage; they are not runtime assertions about uninstalled wrappers.
